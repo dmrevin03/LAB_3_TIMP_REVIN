@@ -3,92 +3,92 @@
 #include <iostream>
 #include <locale>
 #include <codecvt>
+
+
+
 using namespace std;
-struct KeyB_fixture {
-	Cipher * p;
-	KeyB_fixture()
-	{
-		p = new Cipher(L"4");
-	}
-	~KeyB_fixture()
-	{
-		delete p;
-	}
-};
-wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> codec;
-SUITE(KeyTest)
+string wst (int k, wstring s1)
 {
-	TEST(ValidKey) {
-		CHECK_EQUAL("Б-О-Б-АА", codec.to_bytes(Cipher(L"4").encrypt(L"АБОБА")));
-	}
-	TEST(LongKey) {
-		CHECK_EQUAL("-АБОБА",codec.to_bytes(Cipher(L"6").encrypt(L"АБОБА")));
-	}
-	TEST(NegativeKey) {
-		CHECK_THROW(Cipher cp(L"-4"),cipher_error);
-	}
-	TEST(PunctuationInKey) {
-		CHECK_THROW(Cipher cp(L"Б,В"),cipher_error);
-	}
-	TEST(WhitespaceInKey) {
-		CHECK_THROW(Cipher cp(L"1 1"),cipher_error);
-	}
-	TEST(EmptyKey) {
-		CHECK_THROW(Cipher cp(L""),cipher_error);
-	}
-	TEST(AlphaAndPunctuationInKey) {
-		CHECK_THROW(Cipher cp(L"ДЭБ4!!!"),cipher_error);
-	}
+    Cipher w(k);
+    wstring s=w.CoderCipher(w, s1);
+    const string s2 (s.begin(), s.end() );
+    return s2;
+}
+string wst1 (int k, wstring s1)
+{
+    Cipher w(k);
+    wstring s=w.DecoderCipher(k, s1);
+    const string s2 (s.begin(), s.end() );
+    return s2;
+}
+SUITE (KeyTest)
+{
+    wstring test = L"PROGRAMMIROVANIE";
+    int k;
+    TEST (ValidKey) {
+        CHECK_EQUAL(wst(k=4,test),"PRIARARNOMOIGMVE");
+    }
+    TEST(EmptyKey) {
+        CHECK_THROW(wst(k=0,test), cipher_error);
+    }
+    TEST(NegativeKey) {
+        CHECK_THROW(wst(k=-5,test), cipher_error);
+    }
+    TEST(LargeKey) {
+        CHECK_THROW(wst(k=12,test), cipher_error);
+    }
+    TEST(A_characters_in_the_key_instead_of_numbers) {
+        CHECK_THROW(wst(k=12,test), cipher_error);
+    }
 }
 SUITE(EncryptTest)
 {
-	TEST_FIXTURE(KeyB_fixture, UpCaseString) {
-		CHECK_EQUAL("Б-О-Б-АА",
-		            codec.to_bytes(p->encrypt(L"АБОБА")));
-	}
-	TEST_FIXTURE(KeyB_fixture, LowCaseString) {
-		CHECK_EQUAL("Б-О-Б-АА",
-		            codec.to_bytes(p->encrypt(L"абоба")));
-	}
-	TEST_FIXTURE(KeyB_fixture, StringWithWhitspaceAndPunct) {
-		CHECK_EQUAL("Б-О-Б-АА",
-		            codec.to_bytes(p->encrypt(L"А!Б О Б,А")));
-	}
-	TEST_FIXTURE(KeyB_fixture, StringWithNumbers) {
-		CHECK_EQUAL("Б-О-Б-АА", codec.to_bytes(p->encrypt(L"АБ11О3БА")));
-	}
-	TEST_FIXTURE(KeyB_fixture, EmptyString) {
-		CHECK_THROW(p->encrypt(L""),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, NoAlphaString) {
-		CHECK_THROW(p->encrypt(L"1234+8765=9999"),cipher_error);
-	}
+    TEST(ValidText) {
+        CHECK_EQUAL(wst(4,L"PROGRAMMIROVANIE"),"PRIARARNOMOIGMVE");
+    }
+    TEST(LowText) {
+        CHECK_EQUAL(wst(4,L"PRograMmiroVANie"),"PRIARARNOMOIGMVE");
+    }
+    TEST(SpaceText) {
+        CHECK_EQUAL(wst(4,L"PROGRAM MIROVANIE"),"PRIARARNOMOIGMVE");
+    }
+    TEST(EmptyText) {
+        CHECK_THROW(wst(4,L" "),cipher_error);
+    }
+    TEST(ValiDTextWithoutletters) {
+        CHECK_THROW(wst(4,L"!*><?/,.123"),cipher_error);
+    }
+    TEST(TextWithNumber) {
+        CHECK_EQUAL(wst(4,L"PRograM123miroVANie"),"PRIARARNOMOIGMVE");
+    }
+    TEST(TextWithSpaceAndPunct) {
+        CHECK_EQUAL(wst(6,L"The programmer walks!"),"TGRHRWEAAPMLRMKOES");
+    }
 }
 SUITE(DecryptText)
 {
-	TEST_FIXTURE(KeyB_fixture, UpCaseString) {
-		CHECK_EQUAL("АБОБА",
-		            codec.to_bytes(p->decrypt(L"Б-О-Б-АА")));
-	}
-	TEST_FIXTURE(KeyB_fixture, LowCaseString) {
-		CHECK_THROW(p->decrypt(L"Б-О-б-АА"),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, WhitespaceString) {
-		CHECK_THROW(p->decrypt(L"Б-О-Б -АА"),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, DigitsString) {
-		CHECK_THROW(p->decrypt(L"Б-23О-Б-АА"),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, PunctString) {
-		CHECK_THROW(p->decrypt(L"Б-О,-Б-А,А"),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, EmptyString) {
-		CHECK_THROW(p->decrypt(L""),cipher_error);
-	}
+    TEST(ValidTEXT) {
+        CHECK_EQUAL(wst1(4,L"PRIARARNOMOIGMVE"),"PROGRAMMIROVANIE");
+    }
+    TEST(LowTEXT) {
+        CHECK_EQUAL(wst1(4,L"PriaRARNomoIGMve"),"PROGRAMMIROVANIE");
+    }
+    TEST(SpaceTEXT) {
+        CHECK_EQUAL(wst1(4,L"PRIARARN OMOIGMVE"),"PROGRAMMIROVANIE");
+    }
+    TEST(EmptyTEXT) {
+        CHECK_THROW(wst1(4,L" "),cipher_error);
+    }
+    TEST(TextNumberText) {
+        CHECK_EQUAL(wst1(4,L"PRIARARN123OMOIGMVE"),"PROGRAMMIROVANIE");
+    }
+    TEST(TextSymbolText) {
+        CHECK_EQUAL(wst1(4,L"PRIARARN!!!OMOIGMVE"),"PROGRAMMIROVANIE");
+    }
+
 }
-int main(int argc, char **argv)
+
+int main()
 {
-	locale loc("ru_RU.UTF-8");
-	locale::global(loc);
-	return UnitTest::RunAllTests();
+    return UnitTest::RunAllTests();
 }
