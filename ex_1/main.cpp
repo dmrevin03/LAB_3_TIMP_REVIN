@@ -4,103 +4,107 @@
 #include <locale>
 #include <codecvt>
 
+
 using namespace std;
-struct KeyB_fixture {
-	modAlphaCipher * p;
-	KeyB_fixture()
-	{
-		p = new modAlphaCipher(L"Б");
-	}
-	~KeyB_fixture()
-	{
-		delete p;
-	}
-};
-wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> codec;
 SUITE(KeyTest)
 {
-	TEST(ValidKey) {
-		CHECK_EQUAL("АБВАБ", codec.to_bytes(modAlphaCipher(L"АБВ").encrypt(L"ААААА")));
-	}
-	TEST(LongKey) {
-		CHECK_EQUAL("БВГДЕ",codec.to_bytes(modAlphaCipher(L"БВГДЕЁЖЗИЙ").encrypt(L"ААААА")));
-	}
-	TEST(LowCaseKey) {
-		CHECK_EQUAL("БВГБВ",codec.to_bytes(modAlphaCipher(L"бвг").encrypt(L"AAAAA")));
-	}
-	TEST(DigitsInKey) {
-		CHECK_THROW(modAlphaCipher cp(L"Б1"),cipher_error);
-	}
-	TEST(PunctuationInKey) {
-		CHECK_THROW(modAlphaCipher cp(L"Б,В"),cipher_error);
-	}
-	TEST(WhitespaceInKey) {
-		CHECK_THROW(modAlphaCipher cp(L"Б В"),cipher_error);
-	}
-	TEST(EmptyKey) {
-		CHECK_THROW(modAlphaCipher cp(L""),cipher_error);
-	}
-	TEST(WeakKey) {
-		CHECK_THROW(modAlphaCipher cp(L"ААА"),cipher_error);
-	}
+
+    TEST(LargeLetters) {
+        modAlphaCipher test(L"БОЛЬШАЯБУКВА");
+        CHECK (true);
+    }
+    TEST(LargeAndSmallLetters) {
+        modAlphaCipher test (L"МАЛбол");
+        CHECK (true);
+    }
+    TEST(EmptyKey) {
+        CHECK_THROW(modAlphaCipher test(L""), cipher_error);
+    }
+    TEST(Key_with_a_space) {
+        CHECK_THROW(modAlphaCipher test(L"бол мал"), cipher_error);
+    }
+    TEST(Key_with_invalid_characters_number) {
+        CHECK_THROW(modAlphaCipher test(L"бол1мал"), cipher_error);
+    }
+    TEST(Key_with_invalid_characters_special_character) {
+        CHECK_THROW(modAlphaCipher test(L"БОЛ,мал"), cipher_error);
+    }
 }
+
+struct KeyAB_fixture {
+    modAlphaCipher * pointer;
+    KeyAB_fixture()
+    {
+        pointer = new modAlphaCipher(L"АВ");
+    }
+    ~KeyAB_fixture()
+    {
+        delete pointer;
+    }
+};
+
 SUITE(EncryptTest)
 {
-	TEST_FIXTURE(KeyB_fixture, UpCaseString) {
-		CHECK_EQUAL("ВЬТУСБАВФСБАМЙТБРЁСЁРСЬДЙГБЁУШЁСЁИМЁОЙГФЯТПВБЛФ",
-		            codec.to_bytes(p->encrypt(L"БЫСТРАЯБУРАЯЛИСАПЕРЕПРЫГИВАЕТЧЕРЕЗЛЕНИВУЮСОБАКУ")));
-	}
-	TEST_FIXTURE(KeyB_fixture, LowCaseString) {
-		CHECK_EQUAL("ВЬТУСБАВФСБАМЙТБРЁСЁРСЬДЙГБЁУШЁСЁИМЁОЙГФЯТПВБЛФ",
-		            codec.to_bytes(p->encrypt(L"быстраябураялисаперепрыгиваетчерезленивуюсобаку")));
-	}
-	TEST_FIXTURE(KeyB_fixture, StringWithWhitspaceAndPunct) {
-		CHECK_EQUAL("ВЬТУСБАВФСБАМЙТБРЁСЁРСЬДЙГБЁУШЁСЁИМЁОЙГФЯТПВБЛФ",
-		            codec.to_bytes(p->encrypt(L"БЫСТРАЯ БУРАЯ ЛИСА ПЕРЕПРЫГИВАЕТ ЧЕРЕЗ ЛЕНИВУЮ СОБАКУ")));
-	}
-	TEST_FIXTURE(KeyB_fixture, StringWithNumbers) {
-		CHECK_EQUAL("ТОПГЬНДПЕПН", codec.to_bytes(p->encrypt(L"С Новым 2077 годом!!!")));
-	}
-	TEST_FIXTURE(KeyB_fixture, EmptyString) {
-		CHECK_THROW(p->encrypt(L""),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, NoAlphaString) {
-		CHECK_THROW(p->encrypt(L"1234+8765=9999"),cipher_error);
-	}
-	TEST(MaxShiftKey) {
-		CHECK_EQUAL("БЫСТРАЯБУРАЯЛИСАПЕРЕПРЫГИВАЕТЧЕРЕЗЛЕНИВУЮСОБАКУ",
-		            codec.to_bytes(modAlphaCipher(L"Я").encrypt(L"ВЬТУСБАВФСБАМЙТБРЁСЁРСЬДЙГБЁУШЁСЁИМЁОЙГФЯТПВБЛФ")));
-	}
+    TEST_FIXTURE(KeyAB_fixture, LargeLetters) {
+        wstring open_text = L"АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+        wstring result_correct = L"АГВЕДЖЁИЗКЙМЛОНРПТСФУЦХШЧЪЩЬЫЮЭАЯ";
+        CHECK_EQUAL(true, result_correct == pointer->encrypt(open_text));
+    }
+    TEST_FIXTURE(KeyAB_fixture, SmallLetters) {
+        wstring open_text = L"абвгдеёжзийклмнопрстуфхцчшщъыьэюя";
+        wstring result_correct = L"АГВЕДЖЁИЗКЙМЛОНРПТСФУЦХШЧЪЩЬЫЮЭАЯ";
+        CHECK_EQUAL(true, result_correct == pointer->encrypt(open_text));
+    }
+    TEST_FIXTURE(KeyAB_fixture,NumberInText ) {
+        wstring open_text = L"ОТЕЦ23СЫН";
+        CHECK_THROW(pointer->encrypt(open_text),cipher_error);
+    }
+    TEST_FIXTURE(KeyAB_fixture,TextWithSpecialSymbol) {
+        wstring open_text = L"ОТЕЦ|СЫН";
+        CHECK_THROW(pointer->encrypt(open_text),cipher_error);
+    }
+    TEST_FIXTURE(KeyAB_fixture,TextWithASpace ) {
+        wstring open_text = L"ОТЕЦ СЫН";
+        CHECK_THROW(pointer->encrypt(open_text),cipher_error);
+    }
+
 }
-SUITE(DecryptText)
+SUITE(DecryptTest)
 {
-	TEST_FIXTURE(KeyB_fixture, UpCaseString) {
-		CHECK_EQUAL("БЫСТРАЯБУРАЯЛИСАПЕРЕПРЫГИВАЕТЧЕРЕЗЛЕНИВУЮСОБАКУ",
-		codec.to_bytes(p->decrypt(L"ВЬТУСБАВФСБАМЙТБРЁСЁРСЬДЙГБЁУШЁСЁИМЁОЙГФЯТПВБЛФ")));
-	}
-	TEST_FIXTURE(KeyB_fixture, LowCaseString) {
-		CHECK_THROW(p->decrypt(L"вьтУСБАВФСБАМЙТБРЁСЁРСЬДЙГБЁУШЁСЁИМЁОЙГФЯТПВБЛФ"),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, WhitespaceString) {
-		CHECK_THROW(p->decrypt(L"ВЬТУСБА ВФСБА МЙТБ РЁСЁРСЬДЙГБЁУ ШЁСЁИ МЁОЙГФЯ ТПВБЛФ"),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, DigitsString) {
-		CHECK_THROW(p->decrypt(L"ТОПГЬН2077ДПЕПН"),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, PunctString) {
-		CHECK_THROW(p->decrypt(L"ШАЬЬЗб,ЧЗЫЬУ"),cipher_error);
-	}
-	TEST_FIXTURE(KeyB_fixture, EmptyString) {
-		CHECK_THROW(p->decrypt(L""),cipher_error);
-	}
-	TEST(MaxShiftKey) {
-		CHECK_EQUAL("ВЬТУСБАВФСБАМЙТБРЁСЁРСЬДЙГБЁУШЁСЁИМЁОЙГФЯТПВБЛФ",
-		            codec.to_bytes(modAlphaCipher(L"Я").decrypt(L"БЫСТРАЯБУРАЯЛИСАПЕРЕПРЫГИВАЕТЧЕРЕЗЛЕНИВУЮСОБАКУ")));
-	}
+    TEST_FIXTURE(KeyAB_fixture, LargeLetters) {
+        wstring cipher_text = L"АГВЕДЖЁИЗКЙМЛОНРПТСФУЦХШЧЪЩЬЫЮЭАЯ";
+        wstring result_correct = L"АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+        CHECK_EQUAL(true, result_correct == pointer->decrypt(cipher_text));
+    }
+    TEST_FIXTURE(KeyAB_fixture, Smallletters) {
+        wstring cipher_text = L"агведжёизкймлонрптсфуцхшчъщьыюэая";
+        wstring result_correct = L"АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ";
+        CHECK_EQUAL(true, result_correct == pointer->decrypt(cipher_text));
+    }
+    TEST_FIXTURE(KeyAB_fixture,LargeAndSmallLetters ) {
+        wstring cipher_text = L"ЗДраВстуЙТЕ";
+        wstring result_correct = L"ЗВРЮВПТСЙРЕ";
+        CHECK_EQUAL(true, result_correct == pointer->decrypt(cipher_text));
+    }
+
+    TEST_FIXTURE(KeyAB_fixture, EmptyText) {
+        wstring cipher_text = L"";
+        CHECK_THROW(pointer->decrypt(cipher_text),cipher_error);
+    }
+    TEST_FIXTURE(KeyAB_fixture,TextWithNumber) {
+        wstring cipher_text = L"ОТЕЦ23СЫН";
+        CHECK_THROW(pointer->decrypt(cipher_text),cipher_error);
+    }
+    TEST_FIXTURE(KeyAB_fixture,TextWithSymbol) {
+        wstring cipher_text = L"ТРИ+ДВА";
+        CHECK_THROW(pointer->decrypt(cipher_text),cipher_error);
+    }
+    TEST_FIXTURE(KeyAB_fixture,TextWithASpace ) {
+        wstring cipher_text = L"ЗДЕСЬ Есть Пробелы";
+        CHECK_THROW(pointer->decrypt(cipher_text),cipher_error);
+    }
 }
-int main(int argc, char **argv)
+int main()
 {
-	locale loc("ru_RU.UTF-8");
-	locale::global(loc);
-	return UnitTest::RunAllTests();
+    return UnitTest::RunAllTests();
 }
