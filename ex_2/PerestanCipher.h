@@ -4,7 +4,7 @@
 #include <iostream>
 
 using namespace std;
-class Cipher
+class PerestanCipher
 {
 private:
     int k;
@@ -12,10 +12,10 @@ private:
     wstring getValidCipherText(const std::wstring & s);
     int getValidKey(const int k, const std::wstring & s);
 public:
-    Cipher()=delete;
-    Cipher (int w);
-    wstring CoderCipher(Cipher w, wstring& s);
-    wstring DecoderCipher(Cipher w, wstring& s);
+    PerestanCipher()=delete;
+    PerestanCipher (int w);
+    wstring CoderCipher(PerestanCipher w, wstring& s);
+    wstring DecoderCipher(PerestanCipher w, wstring& s);
 };
 class cipher_error: public std::invalid_argument
 {
