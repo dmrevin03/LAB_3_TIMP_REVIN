@@ -1,9 +1,9 @@
-#include  "Cipher.h"
-Cipher::Cipher(int key)
+#include  "PerestanCipher.h"
+PerestanCipher::PerestanCipher(int key)
 {
     this-> k=key;
 }
-wstring Cipher::CoderCipher(Cipher w, wstring& s)
+wstring PerestanCipher::CoderCipher(PerestanCipher w, wstring& s)
 {
     wstring code;
     s=getValidOpenText(s);
@@ -31,7 +31,7 @@ wstring Cipher::CoderCipher(Cipher w, wstring& s)
     }
     return code;
 }
-wstring Cipher::DecoderCipher(Cipher w, wstring& s)
+wstring PerestanCipher::DecoderCipher(PerestanCipher w, wstring& s)
 {
     s=getValidOpenText(s);
     w=getValidKey(w.k,s);
@@ -57,7 +57,7 @@ wstring Cipher::DecoderCipher(Cipher w, wstring& s)
     }
     return decode;
 }
-inline int Cipher::getValidKey(const int k, const std::wstring & s)
+inline int PerestanCipher::getValidKey(const int k, const std::wstring & s)
 {
     if (k<=0)
         throw cipher_error("Wrong key");
@@ -66,7 +66,7 @@ inline int Cipher::getValidKey(const int k, const std::wstring & s)
     else
         return k;
 }
-inline std::wstring Cipher::getValidOpenText(const std::wstring & s)
+inline std::wstring PerestanCipher::getValidOpenText(const std::wstring & s)
 {
     std::wstring tmp;
     for (auto c:s) {
@@ -82,7 +82,7 @@ inline std::wstring Cipher::getValidOpenText(const std::wstring & s)
     return tmp;
 }
 
-inline std::wstring Cipher::getValidCipherText(const std::wstring & s)
+inline std::wstring PerestanCipher::getValidCipherText(const std::wstring & s)
 {
     std::wstring tmp;
     for (auto c:s) {
